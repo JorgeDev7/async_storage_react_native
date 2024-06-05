@@ -7,7 +7,8 @@ import {
   TextInput,
   Button,
   TouchableHighlight,
-  Alert
+  Alert,
+  Animated
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -16,6 +17,8 @@ function App(): React.JSX.Element {
 
   const [inputText, setInputText] = useState('');
   const [isInStorage, setIsInStorage] = useState(false);
+  const [increaseAnimationValue] = useState(new Animated.Value(1));
+  const [opacityValue] = useState(new Animated.Value(0));
 
   useEffect(() => {
     const getDataAS = async () => {
@@ -28,6 +31,14 @@ function App(): React.JSX.Element {
     };
 
     getDataAS();
+  }, []);
+
+  useEffect(() => {
+    Animated.timing(opacityValue, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: false
+    }).start();
   }, []);
 
   const handleInputText = (text: string) => {
@@ -57,11 +68,32 @@ function App(): React.JSX.Element {
     }
   };
 
+  const decreaseButtonScale = () => {
+    Animated.spring(increaseAnimationValue, {
+      toValue: .9,
+      useNativeDriver: false
+    }).start();
+  };
+
+  const increaseButtonScale = () => {
+    Animated.spring(increaseAnimationValue, {
+      toValue: 1,
+      friction: 4,
+      useNativeDriver: false
+    }).start();
+  };
+
+  const animationStyles = {
+    transform: [{ scale: increaseAnimationValue }]
+  };
+
   //todo añadir animación
   return (
     <SafeAreaView style={styles.container}>
       {isInStorage ? <Text>Hola: {inputText}</Text> : ''}
-      <View>
+      <Animated.View style={{
+        opacity: opacityValue
+      }}>
         <TextInput
           placeholder='Escribe tu nombre'
           style={styles.input}
@@ -74,13 +106,17 @@ function App(): React.JSX.Element {
           onPress={() => safeData()}
         />
         {isInStorage &&
-          <TouchableHighlight
-            style={styles.deleteButton}
-            onPress={() => deleteName()}
-          >
-            <Text style={styles.deleteText}>Eliminar Nombre</Text>
-          </TouchableHighlight>}
-      </View>
+          <Animated.View style={animationStyles}>
+            <TouchableHighlight
+              style={styles.deleteButton}
+              onPress={() => deleteName()}
+              onPressIn={() => decreaseButtonScale()}
+              onPressOut={() => increaseButtonScale()}
+            >
+              <Text style={styles.deleteText}>Eliminar Nombre</Text>
+            </TouchableHighlight>
+          </Animated.View>}
+      </Animated.View>
     </SafeAreaView>
   );
 }
